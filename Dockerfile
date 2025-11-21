@@ -65,6 +65,6 @@ RUN pip install --no-cache-dir \
     gradio
 
 # Copy handler
-COPY handler.py /app/handler.py
+COPY mockhandler.py /app/mockhandler.py
 
 CMD ["python", "mockhandler.py"]
