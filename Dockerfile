@@ -67,4 +67,4 @@ RUN pip install --no-cache-dir \
 # Copy handler
 COPY handler.py /app/handler.py
 
-CMD ["python", "handler.py"]
+CMD ["python", "mockhandler.py"]
