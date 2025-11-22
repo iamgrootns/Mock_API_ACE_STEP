@@ -42,9 +42,9 @@ RUN pip install --no-cache-dir \
 
 # Copy requirements and handler script
 COPY requirements.txt /app/requirements.txt
-COPY handler.py /app/mockhandler.py    
+COPY mockhandler.py /app/mockhandler.py
 
 # Install Python dependencies (including ace_step)
 RUN python3.12 -m pip install --no-cache-dir -r /app/requirements.txt
 
-CMD ["python", "/app/mockhandler.py"]   
+CMD ["python", "mockhandler.py"]
