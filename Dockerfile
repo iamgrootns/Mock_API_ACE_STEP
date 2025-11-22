@@ -4,25 +4,42 @@ WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
+# System dependencies needed for Python build and other ops
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 \
-    python3.12-dev \
-    python3.12-venv \
+    wget \
     git \
     ffmpeg \
     libsndfile1 \
     build-essential \
+    libssl-dev \
+    zlib1g-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libreadline-dev \
+    libsqlite3-dev \
+    libgdbm-dev \
+    libdb5.3-dev \
+    libbz2-dev \
+    libexpat1-dev \
+    liblzma-dev \
+    tk-dev \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.12
-
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+# Install Python 3.12 from source
+RUN wget https://www.python.org/ftp/python/3.12.2/Python-3.12.2.tgz && \
+    tar -xf Python-3.12.2.tgz && \
+    cd Python-3.12.2 && \
+    ./configure --enable-optimizations && \
+    make -j$(nproc) && \
+    make altinstall && \
+    cd .. && \
+    rm -rf Python-3.12.2* 
 
 RUN python3.12 -m pip install --upgrade pip setuptools wheel
 
-# PyTorch with CUDA (as before)
-RUN pip install --no-cache-dir \
+# Install PyTorch (CUDA)
+RUN pip3.12 install --no-cache-dir \
     torch==2.6.0+cu124 \
     torchvision==0.21.0+cu124 \
     torchaudio==2.6.0+cu124 \
@@ -33,4 +50,4 @@ COPY mockhandler.py /app/mockhandler.py
 
 RUN python3.12 -m pip install --no-cache-dir -r /app/requirements.txt
 
-CMD ["python", "mockhandler.py"]
+CMD ["python3.12", "mockhandler.py"]
