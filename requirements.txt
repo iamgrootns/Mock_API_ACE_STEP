@@ -25,7 +25,7 @@ peft==0.18.0
 
 # Utilities
 einops
-ace_step @ git+https://github.com/ace-step/ACE-Step.git@6ae0852b1388de6dc0cca26b31a86d711f723cb3
+#ace_step @ git+https://github.com/ace-step/ACE-Step.git@6ae0852b1388de6dc0cca26b31a86d711f723cb3
 omegaconf
 sentencepiece
 protobuf
@@ -35,4 +35,4 @@ tensorboard
 gradio
 torchcodec
 # ACEStep specific (if using pip install from GitHub)
-# ace_step==0.2.0
+ace_step==0.2.0
