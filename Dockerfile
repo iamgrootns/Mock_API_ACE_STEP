@@ -58,19 +58,24 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     tokenizers==0.19.1
 
 # ------------------------------------------------------------
-# 5. Install ACE-Step (No Dependencies)
+# 5. Extra ACE-Step Dependencies
+# ------------------------------------------------------------
+RUN python3.10 -m pip install py3langid==0.7.0
+
+# ------------------------------------------------------------
+# 6. Install ACE-Step (No Dependencies)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 6. Application Requirements
+# 7. Application Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
 
 # ------------------------------------------------------------
-# 7. Application Entrypoint
+# 8. Application Entrypoint
 # ------------------------------------------------------------
 COPY mockhandler.py /app/mockhandler.py
 
