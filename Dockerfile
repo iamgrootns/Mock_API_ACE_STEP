@@ -22,12 +22,12 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 &
 RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
 # ------------------------------------------------------------
-# 2. Install soundfile
+# Install soundfile
 # ------------------------------------------------------------
 RUN python3.10 -m pip install soundfile
 
 # ------------------------------------------------------------
-# 3. PyTorch CUDA 12.4
+# 2. PyTorch CUDA 12.4
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     torch==2.6.0+cu124 \
@@ -36,7 +36,7 @@ RUN python3.10 -m pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124
 
 # ------------------------------------------------------------
-# 4. HuggingFace core libs (compatible with SD3 + ACE-Step)
+# 3. HuggingFace + ACE Dependencies
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
@@ -46,11 +46,11 @@ RUN python3.10 -m pip install --no-cache-dir \
     tqdm==4.67.1 \
     regex==2025.11.3 \
     packaging==25.0 \
-    numpy==2.0.2 \
+    numpy==1.26.4 \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 5. Transformers / Diffusers / PEFT (SD3-compatible)
+# 4. Transformers / Diffusers / PEFT (SD3-compatible)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     diffusers==0.30.2 \
@@ -59,19 +59,19 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     tokenizers==0.19.1
 
 # ------------------------------------------------------------
-# 6. Install ACE-Step WITHOUT dependencies
+# 5. Install ACE-Step (No Dependencies)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 7. App Requirements
+# 6. App Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
 
 # ------------------------------------------------------------
-# 8. Application Entrypoint
+# 7. Application Entrypoint
 # ------------------------------------------------------------
 COPY mockhandler.py /app/mockhandler.py
 
