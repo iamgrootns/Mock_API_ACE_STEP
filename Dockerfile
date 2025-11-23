@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libbz2-dev liblzma-dev libreadline-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Force Python 3.10
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
@@ -50,7 +49,7 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (SD3-compatible)
+# 4. Transformers / Diffusers / PEFT (Fully compatible)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     diffusers==0.30.2 \
@@ -65,7 +64,7 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 6. App Requirements
+# 6. Application Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
