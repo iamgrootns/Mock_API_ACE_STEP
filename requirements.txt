@@ -2,4 +2,6 @@
 torchcodec
 runpod
 requests
+numpy==1.26.4
+
 # Add any other essential direct dependencies your handler imports
