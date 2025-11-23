@@ -1,4 +1,4 @@
-ace_step @ git+https://github.com/ace-step/ACE-Step.git@6ae0852b1388de6dc0cca26b31a86d711f723cb3
+
 torchcodec
 runpod
 requests
