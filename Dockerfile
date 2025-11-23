@@ -35,11 +35,11 @@ RUN python3.10 -m pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124
 
 # ------------------------------------------------------------
-# 3. HuggingFace + ACE Dependencies
+# 3. HuggingFace + ACE Dependencies (Updated)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
-    huggingface-hub==0.22.2 \
+    huggingface-hub==0.23.4 \
     accelerate==1.6.0 \
     pillow==11.0.0 \
     tqdm==4.67.1 \
