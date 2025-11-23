@@ -1,27 +1,37 @@
 import os
-import torch
-import runpod
+import time
+import uuid
 import base64
 import traceback
-import uuid
-import soundfile as sf
-import time
+
+import torch
 import torchaudio
+import soundfile as sf
+import runpod
+
+# IMPORTANT — correct import
 from acestep.pipeline_ace_step import ACEStepPipeline
+
+
 INIT_ERROR_FILE = "/tmp/init_error.log"
 model_demo = None
 
+
+# ------------------------------------------------------------
+#               MODEL INITIALIZATION (GLOBAL)
+# ------------------------------------------------------------
 try:
     if os.path.exists(INIT_ERROR_FILE):
         os.remove(INIT_ERROR_FILE)
 
     print("Loading ACEStep model...")
-    from acestep.pipeline_ace_step import ACEStepPipeline # <--- Correct import for PyPI/GitHub
 
     checkpoint_path = os.environ.get("CHECKPOINT_PATH", "/runpod-volume/checkpoints")
     os.makedirs(checkpoint_path, exist_ok=True)
 
     checkpoint_file = os.path.join(checkpoint_path, "ace_step_v1_3.5b.safetensors")
+
+    # Download model if not already cached
     if not os.path.exists(checkpoint_file):
         from huggingface_hub import snapshot_download
 
@@ -50,65 +60,83 @@ try:
         model_demo.load_checkpoint()
 
     print("✅ ACEStep model loaded successfully")
+
 except Exception as e:
-    tb_str = traceback.format_exc()
+    error_trace = traceback.format_exc()
     with open(INIT_ERROR_FILE, "w") as f:
-        f.write(f"Failed to initialize ACEStep model: {tb_str}")
-    print(f"❌ Initialization error: {tb_str}")
+        f.write(f"Failed to initialize ACEStep model:\n{error_trace}")
+    print(f"❌ Initialization error:\n{error_trace}")
     model_demo = None
 
+
+# ------------------------------------------------------------
+#              PATCH SAVE FUNCTION (RUNTIME)
+# ------------------------------------------------------------
 def patch_save_method(model):
     original_save = model.save_wav_file
+
     def patched_save(target_wav, idx, save_path=None, sample_rate=48000, format="wav"):
+        base_path = "/tmp/outputs"
+        os.makedirs(base_path, exist_ok=True)
+
         if save_path is None:
-            base_path = "/tmp/outputs"
-            os.makedirs(base_path, exist_ok=True)
-            output_path_wav = f"{base_path}/output_{time.strftime('%Y%m%d%H%M%S')}_{idx}.{format}"
+            output_path = f"{base_path}/output_{time.strftime('%Y%m%d%H%M%S')}_{idx}.{format}"
         else:
             if os.path.isdir(save_path):
-                output_path_wav = os.path.join(save_path, f"output_{time.strftime('%Y%m%d%H%M%S')}_{idx}.{format}")
+                output_path = os.path.join(
+                    save_path, f"output_{time.strftime('%Y%m%d%H%M%S')}_{idx}.{format}"
+                )
             else:
-                output_path_wav = save_path
-            output_dir = os.path.dirname(os.path.abspath(output_path_wav))
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
+                output_path = save_path
+
+            os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+        # Move tensor -> CPU
         target_wav = target_wav.float().cpu()
-        if target_wav.dim() == 1:
-            audio_data = target_wav.numpy()
-        else:
-            audio_data = target_wav.transpose(0, 1).numpy()
-        sf.write(output_path_wav, audio_data, sample_rate)
-        return output_path_wav
+        audio_data = target_wav.numpy() if target_wav.ndim == 1 else target_wav.T.numpy()
+
+        sf.write(output_path, audio_data, sample_rate)
+        return output_path
+
     return original_save, patched_save
 
+
+# ------------------------------------------------------------
+#                         HANDLER
+# ------------------------------------------------------------
 def handler(event):
     if os.path.exists(INIT_ERROR_FILE):
         with open(INIT_ERROR_FILE, "r") as f:
-            error_msg = f"Worker initialization failed: {f.read()}"
-        return {"error": error_msg, "status": "failed"}
+            return {"error": f"Worker initialization failed:\n{f.read()}", "status": "failed"}
 
     job_input = event.get("input", {})
     endpoint = job_input.get("endpoint")
-    if not endpoint or endpoint not in ["generate", "inpaint"]:
-        return {"error": "Invalid or missing 'endpoint'. Must be 'generate' or 'inpaint'", "status": "failed"}
+
+    if endpoint not in {"generate", "inpaint"}:
+        return {"error": "Invalid or missing 'endpoint'", "status": "failed"}
 
     try:
+        # =====================================================
+        #                    GENERATE ENDPOINT
+        # =====================================================
         if endpoint == "generate":
             prompt = job_input.get("prompt")
             audio_duration = job_input.get("audio_duration")
-            if prompt is None or audio_duration is None:
-                return {"error": "Missing 'prompt' or 'audio_duration' for generate", "status": "failed"}
-            lyrics = "[inst]"
+
+            if not prompt or audio_duration is None:
+                return {"error": "Missing 'prompt' or 'audio_duration'", "status": "failed"}
+
             output_path = f"/tmp/output_{uuid.uuid4().hex}.wav"
-            original_save, patched_save = patch_save_method(model_demo)
-            model_demo.save_wav_file = patched_save
-            start_time = time.time()
+            original_save, patched = patch_save_method(model_demo)
+            model_demo.save_wav_file = patched
+
+            start = time.time()
             try:
                 model_demo(
                     format="wav",
                     audio_duration=audio_duration,
                     prompt=prompt,
-                    lyrics=lyrics,
+                    lyrics="[inst]",
                     infer_step=60,
                     guidance_scale=14.0,
                     scheduler_type="euler",
@@ -116,57 +144,63 @@ def handler(event):
                     omega_scale=10.0,
                     manual_seeds=[42, 99],
                     guidance_interval=0.5,
-                    guidance_interval_decay=0.0,
                     min_guidance_scale=3.0,
                     use_erg_tag=True,
                     use_erg_lyric=True,
                     use_erg_diffusion=True,
-                    oss_steps=None,
                     guidance_scale_text=3.0,
-                    guidance_scale_lyric=0.0,
                     save_path=output_path,
                 )
             finally:
                 model_demo.save_wav_file = original_save
-            generation_time = time.time() - start_time
+
+            elapsed = time.time() - start
+
             with open(output_path, "rb") as f:
-                audio_bytes = f.read()
-            if os.path.exists(output_path):
-                os.remove(output_path)
-            audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+                data = f.read()
+            os.remove(output_path)
+
             return {
-                "audio_base64": audio_base64,
+                "audio_base64": base64.b64encode(data).decode(),
                 "sample_rate": 48000,
                 "format": "wav",
                 "duration": audio_duration,
-                "generation_time": generation_time,
-                "status": "completed"
+                "generation_time": elapsed,
+                "status": "completed",
             }
 
+        # =====================================================
+        #                      INPAINT ENDPOINT
+        # =====================================================
         elif endpoint == "inpaint":
             prompt = job_input.get("prompt")
-            start_time_val = job_input.get("start_time")
-            end_time_val = job_input.get("end_time")
-            audio_base64 = job_input.get("audio_base64")
-            if None in [prompt, start_time_val, end_time_val, audio_base64]:
-                return {"error": "Missing 'prompt', 'start_time', 'end_time' or 'audio_base64' for inpaint", "status": "failed"}
-            input_audio_path = f"/tmp/input_{uuid.uuid4().hex}.wav"
-            audio_data = base64.b64decode(audio_base64)
-            with open(input_audio_path, "wb") as f:
-                f.write(audio_data)
+            start_s = job_input.get("start_time")
+            end_s = job_input.get("end_time")
+            audio_b64 = job_input.get("audio_base64")
+
+            if None in (prompt, start_s, end_s, audio_b64):
+                return {"error": "Missing one of required fields", "status": "failed"}
+
+            # Decode input audio
+            input_path = f"/tmp/input_{uuid.uuid4().hex}.wav"
+            with open(input_path, "wb") as f:
+                f.write(base64.b64decode(audio_b64))
+
             try:
-                audio_info = torchaudio.info(input_audio_path)
-                total_duration = audio_info.num_frames / audio_info.sample_rate
-            except Exception:
-                total_duration = 30.0
+                info = torchaudio.info(input_path)
+                total_dur = info.num_frames / info.sample_rate
+            except:
+                total_dur = 30.0
+
             output_path = f"/tmp/inpainted_{uuid.uuid4().hex}.wav"
-            original_save, patched_save = patch_save_method(model_demo)
-            model_demo.save_wav_file = patched_save
-            start_process = time.time()
+            original_save, patched = patch_save_method(model_demo)
+            model_demo.save_wav_file = patched
+
+            start = time.time()
             try:
                 model_demo(
                     format="wav",
-                    audio_duration=total_duration,
+                    audio_duration=total_dur,
                     prompt=prompt,
                     lyrics="[inst]",
                     infer_step=60,
@@ -176,42 +210,42 @@ def handler(event):
                     omega_scale=10.0,
                     manual_seeds=[43],
                     guidance_interval=0.5,
-                    guidance_interval_decay=0.0,
                     min_guidance_scale=3.0,
                     use_erg_tag=True,
                     use_erg_lyric=True,
                     use_erg_diffusion=True,
-                    oss_steps=None,
                     guidance_scale_text=6.0,
-                    guidance_scale_lyric=0.0,
                     save_path=output_path,
                     task="repaint",
-                    repaint_start=int(start_time_val),
-                    repaint_end=int(end_time_val),
+                    repaint_start=int(start_s),
+                    repaint_end=int(end_s),
                     retake_variance=0.75,
-                    src_audio_path=input_audio_path,
+                    src_audio_path=input_path,
                 )
             finally:
                 model_demo.save_wav_file = original_save
-            processing_time = time.time() - start_process
+
+            elapsed = time.time() - start
+
             with open(output_path, "rb") as f:
-                output_bytes = f.read()
-            if os.path.exists(input_audio_path):
-                os.remove(input_audio_path)
-            if os.path.exists(output_path):
-                os.remove(output_path)
-            audio_base64_output = base64.b64encode(output_bytes).decode('utf-8')
+                out = f.read()
+
+            os.remove(input_path)
+            os.remove(output_path)
+
             return {
-                "audio_base64": audio_base64_output,
+                "audio_base64": base64.b64encode(out).decode(),
                 "sample_rate": 48000,
                 "format": "wav",
-                "inpainted_section": f"{start_time_val}s-{end_time_val}s",
-                "processing_time": processing_time,
-                "status": "completed"
+                "inpainted_section": f"{start_s}s-{end_s}s",
+                "processing_time": elapsed,
+                "status": "completed",
             }
+
     except Exception as e:
-        error_msg = traceback.format_exc()
-        print(f"❌ Error: {error_msg}")
-        return {"error": error_msg, "status": "failed"}
+        err = traceback.format_exc()
+        print(f"❌ Error:\n{err}")
+        return {"error": err, "status": "failed"}
+
 
 runpod.serverless.start({"handler": handler})
