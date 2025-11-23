@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 # ------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget git ffmpeg libsndfile1 \
-    python3.10 python3.10-venv python3.10-distutils \
+    python3.10 python3.10-venv python3.10-distutils python3-pip \
     build-essential libssl-dev zlib1g-dev \
     libbz2-dev liblzma-dev libreadline-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
-RUN python -m ensurepip --upgrade
-RUN python -m pip install --upgrade pip setuptools wheel
+# Upgrade pip
+RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
 # ------------------------------------------------------------
 # 2. Install PyTorch CUDA 12.4
 # ------------------------------------------------------------
-RUN python -m pip install --no-cache-dir \
+RUN python3.10 -m pip install --no-cache-dir \
     torch==2.6.0+cu124 \
     torchvision==0.21.0+cu124 \
     torchaudio==2.6.0+cu124 \
@@ -33,7 +33,7 @@ RUN python -m pip install --no-cache-dir \
 # ------------------------------------------------------------
 # 3. Install ACE-Step compatible HF stack
 # ------------------------------------------------------------
-RUN python -m pip install --no-cache-dir \
+RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
     huggingface-hub==0.36.0 \
     accelerate==1.6.0 \
@@ -41,11 +41,11 @@ RUN python -m pip install --no-cache-dir \
     tqdm==4.67.1 \
     regex==2025.11.3 \
     packaging==25.0 \
-    loguru==0.7.3 \
-    numpy==2.0.2
+    numpy==2.0.2 \
+    loguru==0.7.3
 
-# transformers / diffusers / peft pinned exactly for ACE-Step 0.2.0
-RUN python -m pip install --no-cache-dir --no-deps \
+# Transformers / diffusers / peft pinned EXACTLY
+RUN python3.10 -m pip install --no-cache-dir --no-deps \
     transformers==4.31.0 \
     diffusers==0.21.4 \
     peft==0.3.0 \
@@ -54,18 +54,18 @@ RUN python -m pip install --no-cache-dir --no-deps \
 # ------------------------------------------------------------
 # 4. Install ACE-Step
 # ------------------------------------------------------------
-RUN python -m pip install --no-cache-dir --no-deps \
+RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 5. Install Application Requirements
+# 5. Install Your App Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
-RUN python -m pip install --no-cache-dir -r /app/requirements.txt
+RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
 
 # ------------------------------------------------------------
-# 6. Copy Code
+# 6. Copy Application
 # ------------------------------------------------------------
 COPY mockhandler.py /app/mockhandler.py
 
-CMD ["python", "mockhandler.py"]
+CMD ["python3.10", "mockhandler.py"]
