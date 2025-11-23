@@ -16,7 +16,7 @@ try:
         os.remove(INIT_ERROR_FILE)
 
     print("Loading ACEStep model...")
-    from ace_step.pipeline_ace_step import ACEStepPipeline  # <--- Correct import for PyPI/GitHub
+    from acestep.pipeline_ace_step import ACEStepPipeline # <--- Correct import for PyPI/GitHub
 
     checkpoint_path = os.environ.get("CHECKPOINT_PATH", "/runpod-volume/checkpoints")
     os.makedirs(checkpoint_path, exist_ok=True)
