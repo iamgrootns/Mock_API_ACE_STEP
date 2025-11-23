@@ -37,7 +37,6 @@ RUN python3.10 -m pip install --no-cache-dir \
 
 # ------------------------------------------------------------
 # 3. HuggingFace + ACE Dependencies
-# (Corrected to resolve version conflicts)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
@@ -51,7 +50,8 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (Updated for SD3 support)
+# 4. Transformers / Diffusers / PEFT 
+#    (SD3-compatible — FIXED)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     diffusers==0.30.2 \
