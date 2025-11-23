@@ -58,9 +58,13 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     tokenizers==0.19.1
 
 # ------------------------------------------------------------
-# 5. Extra ACE-Step Dependencies
+# 5. Extra ACE-Step Dependencies (Corrected)
 # ------------------------------------------------------------
-RUN python3.10 -m pip install py3langid==0.7.0
+RUN python3.10 -m pip install \
+    langid==1.1.6 \
+    jamo==0.4.1 \
+    pypinyin==0.49.0 \
+    pyworld==0.3.4
 
 # ------------------------------------------------------------
 # 6. Install ACE-Step (No Dependencies)
