@@ -7,7 +7,7 @@ import uuid
 import soundfile as sf
 import time
 import torchaudio
-
+from acestep.pipeline_ace_step import ACEStepPipeline
 INIT_ERROR_FILE = "/tmp/init_error.log"
 model_demo = None
 
