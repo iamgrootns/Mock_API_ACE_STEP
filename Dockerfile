@@ -51,13 +51,13 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (Pinned Versions)
+# 4. Transformers / Diffusers / PEFT (Updated for SD3 support)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
-    transformers==4.31.0 \
-    diffusers==0.21.4 \
-    peft==0.3.0 \
-    tokenizers==0.13.3
+    diffusers==0.30.2 \
+    transformers==4.44.2 \
+    peft==0.6.2 \
+    tokenizers==0.15.2
 
 # ------------------------------------------------------------
 # 5. Install ACE-Step (No Dependencies)
