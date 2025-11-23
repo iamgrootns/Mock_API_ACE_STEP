@@ -15,14 +15,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libbz2-dev liblzma-dev libreadline-dev libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Force Python 3.10 as default
+# Force Python 3.10 as the default interpreter
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
     update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1
 
 RUN python3.10 -m pip install --upgrade pip setuptools wheel
 
 # ------------------------------------------------------------
-# Install soundfile (needs system libs above)
+# Install soundfile (required for audio output)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install soundfile
 
@@ -36,11 +36,12 @@ RUN python3.10 -m pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124
 
 # ------------------------------------------------------------
-# 3. HuggingFace + ACE dependencies
+# 3. HuggingFace + ACE Dependencies
+# (Corrected to resolve version conflicts)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
-    huggingface-hub==0.19.4 \
+    huggingface-hub==0.22.2 \
     accelerate==1.6.0 \
     pillow==11.0.0 \
     tqdm==4.67.1 \
@@ -50,7 +51,7 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (exact pinned versions)
+# 4. Transformers / Diffusers / PEFT (Pinned Versions)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     transformers==4.31.0 \
@@ -59,19 +60,19 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     tokenizers==0.13.3
 
 # ------------------------------------------------------------
-# 5. Install ACE-Step (no deps)
+# 5. Install ACE-Step (No Dependencies)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 6. App requirements
+# 6. Application Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
 
 # ------------------------------------------------------------
-# 7. Application
+# 7. Application Entrypoint
 # ------------------------------------------------------------
 COPY mockhandler.py /app/mockhandler.py
 
