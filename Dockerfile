@@ -49,13 +49,14 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (SD3 compatible)
+# 4. Transformers / Diffusers / PEFT (Updated for AutoencoderDC)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
-    diffusers==0.30.2 \
+    diffusers==0.32.0 \
     transformers==4.42.4 \
     peft==0.6.2 \
     tokenizers==0.19.1
+
 
 # ------------------------------------------------------------
 # 5. Extra ACE-Step Dependencies
