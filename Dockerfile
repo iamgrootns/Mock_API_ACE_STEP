@@ -59,12 +59,18 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
 
 
 # ------------------------------------------------------------
-# 5. Extra ACE-Step Dependencies
+# 5. Extra ACE-Step Dependencies (Language + Music DCAE)
 # ------------------------------------------------------------
-RUN python3.10 -m pip install \
+RUN python3.10 -m pip install --no-cache-dir \
     langid==1.1.6 \
     jamo==0.4.1 \
-    pypinyin==0.49.0
+    pypinyin==0.49.0 \
+    librosa==0.10.1 \
+    numba==0.58.1 \
+    llvmlite==0.41.1 \
+    scipy==1.10.1 \
+    resampy==0.4.3 \
+    audioread==3.0.1
 
 # ------------------------------------------------------------
 # 6. py3langid (REQUIRED — via PyPI, NOT GitHub)
