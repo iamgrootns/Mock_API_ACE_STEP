@@ -58,16 +58,19 @@ RUN python3.10 -m pip install --no-cache-dir --no-deps \
     tokenizers==0.19.1
 
 # ------------------------------------------------------------
-# 5. Extra ACE-Step Dependencies (Corrected)
+# 5. Extra ACE-Step Dependencies
 # ------------------------------------------------------------
 RUN python3.10 -m pip install \
     langid==1.1.6 \
     jamo==0.4.1 \
     pypinyin==0.49.0
 
-# py3langid (required by ACE-Step, only available on GitHub)
-RUN python3.10 -m pip install git+https://github.com/jackaduma/py3langid.git
-
+# ------------------------------------------------------------
+# py3langid (manual git clone — FIXED)
+# ------------------------------------------------------------
+RUN git clone https://github.com/jackaduma/py3langid.git /tmp/py3langid && \
+    cd /tmp/py3langid && \
+    python3.10 -m pip install .
 
 # ------------------------------------------------------------
 # 6. Install ACE-Step (No Dependencies)
