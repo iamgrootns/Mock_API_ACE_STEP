@@ -35,7 +35,7 @@ RUN python3.10 -m pip install --no-cache-dir \
     --index-url https://download.pytorch.org/whl/cu124
 
 # ------------------------------------------------------------
-# 3. HuggingFace + ACE Dependencies (Updated)
+# 3. HuggingFace + ACE Dependencies
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir \
     safetensors==0.7.0 \
@@ -49,7 +49,7 @@ RUN python3.10 -m pip install --no-cache-dir \
     loguru==0.7.3
 
 # ------------------------------------------------------------
-# 4. Transformers / Diffusers / PEFT (Fully compatible)
+# 4. Transformers / Diffusers / PEFT (SD3 compatible)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     diffusers==0.30.2 \
@@ -66,26 +66,24 @@ RUN python3.10 -m pip install \
     pypinyin==0.49.0
 
 # ------------------------------------------------------------
-# py3langid (manual git clone — FIXED)
+# 6. py3langid (REQUIRED — via PyPI, NOT GitHub)
 # ------------------------------------------------------------
-RUN git clone https://github.com/jackaduma/py3langid.git /tmp/py3langid && \
-    cd /tmp/py3langid && \
-    python3.10 -m pip install .
+RUN python3.10 -m pip install py3langid
 
 # ------------------------------------------------------------
-# 6. Install ACE-Step (No Dependencies)
+# 7. Install ACE-Step (No Dependencies)
 # ------------------------------------------------------------
 RUN python3.10 -m pip install --no-cache-dir --no-deps \
     git+https://github.com/ace-step/ACE-Step.git
 
 # ------------------------------------------------------------
-# 7. Application Requirements
+# 8. Application Requirements
 # ------------------------------------------------------------
 COPY requirements.txt /app/requirements.txt
 RUN python3.10 -m pip install --no-cache-dir -r /app/requirements.txt
 
 # ------------------------------------------------------------
-# 8. Application Entrypoint
+# 9. Application Entrypoint
 # ------------------------------------------------------------
 COPY mockhandler.py /app/mockhandler.py
 
