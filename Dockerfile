@@ -72,7 +72,8 @@ RUN python3.10 -m pip install --no-cache-dir \
     resampy==0.4.3 \
     audioread==3.0.1 \
     hangul-romanize==0.1.0 \
-    num2words==0.5.13
+    num2words==0.5.13 \
+    spacy==3.7.2
 
 
 # ------------------------------------------------------------
